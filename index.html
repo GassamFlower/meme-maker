@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meme Generator - Create Funny Memes Online Free</title>
+<meta name="description" content="Free online meme generator. Add top and bottom text to over 10 classic meme templates, customize colors and font size, then download your meme in seconds. No signup required.">
+<meta name="keywords" content="meme generator, make a meme, meme maker, create meme, top text bottom text">
+<link rel="canonical" href="https://your-site.vercel.app/">
+<style>
+:root{--bg:#0f172a;--card:#1e293b;--ink:#e2e8f0;--brand:#22d3ee;--brand2:#0891b2;--line:#334155}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6}
+header.top{background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff;padding:34px 20px;text-align:center}
+header.top h1{margin:0;font-size:28px}
+header.top p{margin:8px 0 0;opacity:.95}
+.wrap{max-width:860px;margin:0 auto;padding:20px}
+main{display:grid;gap:20px}
+.card{background:var(--card);border-radius:14px;padding:20px}
+.card h2{margin:0 0 12px;font-size:19px;color:#f1f5f9}
+label{display:block;font-size:13px;color:#94a3b8;margin:4px 0}
+input[type=text],textarea,select{width:100%;padding:10px 12px;border:1px solid #475569;border-radius:8px;background:#0f172a;color:#e2e8f0;font-size:15px;margin-bottom:10px}
+input[type=range]{width:100%;margin:4px 0 14px}
+.btn{background:var(--brand);color:#082f49;border:0;border-radius:9px;padding:11px 20px;font-size:15px;font-weight:700;cursor:pointer}
+.btn:hover{background:#67e8f9}
+.btn.secondary{background:#475569;color:#f1f5f9}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+canvas{width:100%;height:auto;border-radius:10px;background:#000}
+.tpl{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin:8px 0}
+.tpl button{aspect-ratio:1;border:2px solid transparent;border-radius:8px;background:#0f172a;cursor:pointer;padding:0;overflow:hidden}
+.tpl button.on{border-color:var(--brand)}
+.tpl button img{width:100%;height:100%;object-fit:cover}
+footer{background:#0b1220;color:#94a3b8;padding:20px;text-align:center;font-size:13px}
+.gas{display:none}
+/* 结构提示便于 SEO 理解 */
+.tip{background:#0f172a;border-left:3px solid var(--brand);padding:10px 14px;border-radius:6px;font-size:13px;color:#94a3b8;margin-top:12px}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <h1>Memefy — Free Online Meme Generator</h1>
+    <p>Pick a template, type top &amp; bottom text, hit Generate, and download your meme. No signup.</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ===== 工具区 ===== -->
+  <section class="card" aria-label="Meme Maker">
+    <h2>🎨 Make Your Meme</h2>
+    <div class="tpl" id="tpl"></div>
+
+    <label for="top">Top text</label>
+    <input type="text" id="top" placeholder="WHEN THE CODE WORKED ON FIRST TRY" value="WHEN THE CODE WORKED">
+    <label for="bottom">Bottom text</label>
+    <input type="text" id="bottom" placeholder="ON THE FIRST TRY" value="ON FIRST TRY">
+    <label for="size">Text size: <span id="sizeV">48</span>px</label>
+    <input type="range" id="size" min="24" max="90" value="48">
+
+    <canvas id="cv" width="600" height="400"></canvas>
+
+    <div class="row" style="margin-top:14px">
+      <button class="btn" id="go">Generate Meme</button>
+      <button class="btn secondary" id="dl">Download PNG</button>
+      <button class="btn secondary" id="rf">Randomize</button>
+    </div>
+    <div class="tip">How it works: you text is drawn on a real canvas, so the result stays sharp when you download.</div>
+  </section>
+
+  <!-- ===== FAQ / 内容区（贡献长尾流量） ===== -->
+  <section class="card">
+    <h2>What is a meme generator?</h2>
+    <p>A meme generator is a free tool that lets you add your own catch phrases to popular image templates. It's perfect for making quick jokes to share with friends, on social media, or inside group chats — no photo-editing skills required.</p>
+    <h2>Why use this one?</h2>
+    <ul>
+      <li>No account, no watermark, no waiting.</li>
+      <li>10 classic templates ready to go.</li>
+      <li>Works on your phone and desktop.</li>
+      <li>Download in clearly a high-quality PNG.</li>
+    </ul>
+  </section>
+
+</main>
+
+<footer>
+  <p>Built to practice the "one keyword, one small site" SEO method.  Templates are placeholder images.</p>
+</footer>
+
+<script>
+"use strict";
+// 画布里画的一个可调用模板：(ctx, w, h) => void
+const TEMPLATES = [
+  { name: "Plain White", draw(c,w,h){ c.fillStyle="#fff"; c.fillRect(0,0,w,h); } },
+  { name: "Plain Black", draw(c,w,h){ c.fillStyle="#111"; c.fillRect(0,0,w,h); } },
+  { name: "Two Panel", draw(c,w,h){ c.fillStyle="#fff"; c.fillRect(0,0,w,h); c.strokeStyle="#000"; c.lineWidth=6; c.strokeRect(10,10,w/2-20,h-20); c.strokeRect(w/2+10,10,w/2-20,h-20); } },
+  { name: "Green Screen", draw(c,w,h){ c.fillStyle="#00b140"; c.fillRect(0,0,w,h); } },
+  { name:"Gradient Fun", draw(c,w,h){ const g=c.createLinearGradient(0,0,w,h); g.addColorStop(0,"#f97316"); g.addColorStop(1,"#d946ef"); c.fillStyle=g; c.fillRect(0,0,w,h); } },
+  { name:"Polka Dots", draw(c,w,h){ c.fillStyle="#fff"; c.fillRect(0,0,w,h); c.fillStyle="#fbbf24"; const r=14; for(let y=r;y<h;y+=r*3.2) for(let x=r;x<w;x+=r*3.2){ c.beginPath(); c.arc(x,y,r,0,Math.PI*2); c.fill(); } } },
+  { name:"Checker", draw(c,w,h){ const s=12; for(let y=0;y<h;y+=s) for(let x=0;x<w;x+=s){ c.fillStyle = ((x/s)+(y/s))%2? "#000":"#fff"; c.fillRect(x,y,s,s); } } },
+  { name:"Blue Sky", draw(c,w,h){ const g=c.createLinearGradient(0,0,0,h); g.addColorStop(0,"#38bdf8"); g.addColorStop(1,"#97e6ff"); c.fillStyle=g; c.fillRect(0,0,w,h); } },
+  { name:"Sunset", draw(c,w,h){ const g=c.createLinearGradient(0,0,0,h); g.addColorStop(0,"#fde047"); g.addColorStop(.5,"#f97316"); g.addColorStop(1,"#7c2d12"); c.fillStyle=g; c.fillRect(0,0,w,h); } },
+  { name:"Matrix", draw(c,w,h){ c.fillStyle="#0a0f0a"; c.fillRect(0,0,w,h); c.fillStyle="#22c55e"; c.font="16px monospace"; for(let i=0;i<40;i++){ c.fillText(Math.random()>0.5?"1":"0", Math.random()*w, Math.random()*h); } } },
+];
+
+const cv = document.getElementById("cv");
+const ctx = cv.getContext("2d");
+const tplBox = document.getElementById("tpl");
+let cur = 0;
+
+// 渲染模板预览
+TEMPLATES.forEach((t,i)=>{
+  const b=document.createElement("button");
+  b.title=t.name;
+  if(i===cur) b.className="on";
+  b.innerHTML=`<canvas width="90" height="90"></canvas>`;
+  b.onclick=()=>{ cur=i; document.querySelectorAll(".tpl button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); render(); };
+  const pc=b.querySelector("canvas").getContext("2d");
+  t.draw(pc,90,90);
+  tplBox.appendChild(b);
+});
+
+function wrapText(text, max){
+  const words = String(text).toUpperCase().split(" ");
+  let lines=[], line="";
+  for(const w of words){
+    const test = line ? line+" "+w : w;
+    if(ctx.measureText(test).width > max && line){ lines.push(line); line=w; }
+    else line=test;
+  }
+  if(line) lines.push(line);
+  return lines;
+}
+
+function render(){
+  const w=cv.width, h=cv.height;
+  TEMPLATES[cur].draw(ctx,w,h);
+  const top=document.getElementById("top").value.toUpperCase();
+  const bot=document.getElementById("bottom").value.toUpperCase();
+  const px=parseInt(document.getElementById("size").value);
+  document.getElementById("sizeV").textContent=px;
+  ctx.fillStyle="#fff"; ctx.strokeStyle="#000"; ctx.lineWidth=Math.max(6,px/8);
+  ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.font=`900 ${px}px Impact, Arial Black, sans-serif`;
+
+  const drawLines=(txt, baseY, up)=>{
+    const lines=wrapText(txt, w-40);
+    const lh=px*1.15;
+    const start = up ? baseY - ((lines.length-1)*lh)/2 : baseY + ((lines.length-1)*lh)/2;
+    lines.forEach((ln,i)=>{
+      const y = up ? start + i*lh : start - i*lh;
+      ctx.strokeText(ln,w/2,y); ctx.fillText(ln,w/2,y);
+    });
+  };
+  if(top) drawLines(top, Math.min(px+20, h*0.18), true);
+  if(bot) drawLines(bot, h-24, false);
+}
+
+document.getElementById("go").onclick=render;
+document.getElementById("dl").onclick=()=>{ render(); const a=document.createElement("a"); a.download="my-meme.png"; a.href=cv.toDataURL("image/png"); a.click(); };
+document.getElementById("rf").onclick=()=>{
+  const T=["WHEN THE CODE WORKS","ME EXPLAINING THE BUG","NOBODY:","EVERYBODY:","WHEN THE WIFI CONNECTS","I DID IT"];
+  const B=["ON FIRST TRY","IT'S NOT A BUG IT'S A FEATURE","MY BRAIN ON LATE NIGHTS","THEN EVERYONE CLAPPED","FINALLY"];
+  document.getElementById("top").value=T[Math.random()*T.length|0];
+  document.getElementById("bottom").value=B[Math.random()*B.length|0];
+  render();
+};
+
+render();
+</script>
+</body>
+</html>
